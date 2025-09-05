@@ -37,7 +37,7 @@ def fetch_crypto_price(crypto_label, api_key):
 st.set_page_config(page_title="Crypto Option Price Calculator", layout="centered")
 st.title("🪙 Crypto Option Price Calculator")
 st.markdown(
-    "This app calculates **European Call/Put option prices** for cryptocurrencies "
+    "This app calculates **Call/Put option prices** for cryptocurrencies "
     "using the Black-Scholes model. "
     "*You must enter your CoinMarketCap API key to continue!*"
 )
