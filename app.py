@@ -1,24 +1,56 @@
 import streamlit as st
-from crypto_option_pricing import black_scholes, fetch_crypto_price, crypto_map
+from scipy.stats import norm
+import numpy as np
+import requests
 
+# --- Crypto Map
+crypto_map = {
+    "Bitcoin": {'symbol': 'BTC'},
+    "Ethereum": {'symbol': 'ETH'},
+    "Solana": {'symbol': 'SOL'},
+    "Binance Coin": {'symbol': 'BNB'},
+    "XRP": {'symbol': 'XRP'},
+}
+
+# --- Black-Scholes Function
+def black_scholes(S, K, T, r, sigma, type="call"):
+    d1 = (np.log(S / K) + (r + 0.5*sigma**2)*T) / (sigma*np.sqrt(T))
+    d2 = d1 - sigma*np.sqrt(T)
+    if type == "call":
+        price = S * norm.cdf(d1) - K * np.exp(-r*T) * norm.cdf(d2)
+    else:
+        price = K * np.exp(-r*T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+    return price
+
+# --- Fetch crypto price using CoinMarketCap API
+def fetch_crypto_price(crypto_label, api_key):
+    url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+    symbol = crypto_map[crypto_label]['symbol']
+    headers = {"X-CMC_PRO_API_KEY": api_key}
+    params = {"symbol": symbol}
+    resp = requests.get(url, headers=headers, params=params)
+    resp.raise_for_status()
+    data = resp.json()
+    return data['data'][symbol]['quote']['USD']['price']
+
+# --- Streamlit UI
 st.set_page_config(page_title="Crypto Option Price Calculator", layout="centered")
 st.title("🪙 Crypto Option Price Calculator")
-
 st.markdown(
-    "This app calculates **Call/Put option prices** for cryptocurrencies "
-    "using the Black-Scholes model. *You must enter your CoinMarketCap API key to continue!*"
+    "This app calculates **European Call/Put option prices** for cryptocurrencies "
+    "using the Black-Scholes model. "
+    "*You must enter your CoinMarketCap API key to continue!*"
 )
 
-# Accept ONLY API key as input at start
+# API Key input
 api_key = st.text_input(
     "Enter your CoinMarketCap API Key to begin",
     type="password"
 )
 
-# Further UI is hidden unless API key is entered
 if api_key:
     st.success("API Key accepted. Continue to select crypto and enter option details.")
-    
+
     crypto_label = st.selectbox(
         "Choose Cryptocurrency",
         options=list(crypto_map.keys()),
